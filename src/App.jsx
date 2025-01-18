@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 
 import AudioPlayer from './components/AudioPlayer';
 import Progress from './components/Progress';
-import { SPEAKERS, DEFAULT_SPEAKER } from './constants';
 
 const App = () => {
 
@@ -12,8 +11,7 @@ const App = () => {
   const [progressItems, setProgressItems] = useState([]);
 
   // Inputs and outputs
-  const [text, setText] = useState('I love Hugging Face!');
-  const [selectedSpeaker, setSelectedSpeaker] = useState(DEFAULT_SPEAKER);
+  const [text, setText] = useState('किसी अनजाने और दूर-दराज के जंगल में, एक सुनसान रास्ते पर, चार बच्चे');
   const [output, setOutput] = useState(null);
 
   // Create a reference to the worker object.
@@ -65,8 +63,12 @@ const App = () => {
           // Generation complete: re-enable the "Translate" button
           setDisabled(false);
 
-          const blobUrl = URL.createObjectURL(e.data.output);
-          setOutput(blobUrl);
+          if (e.data.audio instanceof Blob) {
+            const blobUrl = URL.createObjectURL(e.data.audio);
+            setOutput(blobUrl);
+          } else {
+            console.error('Invalid audio data received', e.data.audio);
+          }
           break;
       }
     };
@@ -82,8 +84,7 @@ const App = () => {
   const handleGenerateSpeech = () => {
     setDisabled(true);
     worker.current.postMessage({
-      text,
-      speaker_id: selectedSpeaker,
+      text
     });
   };
 
@@ -120,23 +121,6 @@ const App = () => {
             value={text}
             onChange={(e) => setText(e.target.value)}
           ></textarea>
-        </div>
-        <div className='mb-4'>
-          <label htmlFor='speaker' className='block text-sm font-medium text-gray-600'>
-            Speaker
-          </label>
-          <select
-            id='speaker'
-            className='border border-gray-300 rounded-md p-2 w-full'
-            value={selectedSpeaker}
-            onChange={(e) => setSelectedSpeaker(e.target.value)}
-          >
-            {Object.entries(SPEAKERS).map(([key, value]) => (
-              <option key={key} value={value}>
-                {key}
-              </option>
-            ))}
-          </select>
         </div>
         <div className='flex justify-center'>
           <button
